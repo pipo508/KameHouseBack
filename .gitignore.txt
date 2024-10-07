@@ -1,0 +1,65 @@
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.hprof
+*.project
+*.classpath
+*.factorypath
+*.prefs
+*.settings/
+*.springBeans
+*.DS_Store
+*.iml
+target/
+bin/
+
+# Maven specific
+/log/
+!/src/main/resources/log/
+/.mvn/
+!/mvnw
+!/mvnw.cmd
+
+# Spring Boot specific
+spring-boot-devtools.jar
+*.swp
+*.swo
+*.bak
+*.orig
+*.tmp
+
+# Ignore sensitive configuration files, but keep sample or template files
+*application.properties
+*application.yml
+!src/main/resources/application.properties.example
+!src/main/resources/application.yml.example
+
+# Node / Expo specific
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo project files
+.expo/
+.expo-shared/
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build output
+android/app/build/
+ios/build/
+ios/Pods/
+
+# IDE specific
+.idea/
+.vscode/
+
+# Package-lock and yarn.lock to ensure the correct dependencies versions
+package-lock.json
+yarn.lock

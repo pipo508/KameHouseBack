@@ -1,0 +1,52 @@
+@startuml
+class User {
+    +int id
+    +String name
+    +String surname
+    +String address
+    +String phone
+    +String age
+    +String email
+    +String password
+    +String role
+    +Plan plan
+    +Rutine rutine
+    +String gender
+    +String created_at
+}
+class Plan {
+    +int id
+    +String type
+    +String description
+}
+class Rutine {
+    +int id
+    +Exercise[] exercises
+    +String series
+    +String repetitions
+    +String time_wait
+    +String weight
+}
+class Payment {
+    +int id
+    +User user   // Referencia al usuario que realizó el pago
+    +String method
+    +String amount
+    +String payment_date
+    +String expiration_date
+    +Boolean status
+}
+
+class Exercise {
+    +int id
+    +String name
+    +String description
+    +String video_url
+    +String muscle_type
+}
+
+User -- Plan: "1 usuario tiene 1 plan"
+User -- Rutine: "1 usuario tiene 1 rutina"
+User -- Payment: "1 usuario tiene 1 o más pagos"
+Rutine -- Exercise: "1 rutina tiene 1 o más ejercicios"
+@enduml
