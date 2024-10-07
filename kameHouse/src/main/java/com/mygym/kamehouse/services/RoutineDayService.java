@@ -68,4 +68,31 @@ public class RoutineDayService {
         routineDay.addExerciseRoutineDay(exerciseRoutineDay);
         routineDayRepository.save(routineDay);
     }
+
+    @Transactional
+    public void removeExerciseFromRoutineDay(Long routineDayId, Long exerciseRoutineDayId) {
+        RoutineDay routineDay = routineDayRepository.findById(routineDayId)
+                .orElseThrow(() -> new IllegalArgumentException("RoutineDay not found with id: " + routineDayId));
+
+        routineDay.getExerciseRoutineDays().removeIf(erd -> erd.getId().equals(exerciseRoutineDayId));
+        routineDayRepository.save(routineDay);
+    }
+
+    @Transactional
+    public void removeAllExercisesFromRoutineDay(Long routineDayId) {
+        RoutineDay routineDay = routineDayRepository.findById(routineDayId)
+                .orElseThrow(() -> new IllegalArgumentException("RoutineDay not found with id: " + routineDayId));
+
+        routineDay.getExerciseRoutineDays().clear();
+        routineDayRepository.save(routineDay);
+    }
+
+    @Transactional
+    public void removeAllExercisesFromAllRoutineDays() {
+        List<RoutineDay> routineDays = routineDayRepository.findAll();
+        for (RoutineDay routineDay : routineDays) {
+            routineDay.getExerciseRoutineDays().clear();
+        }
+        routineDayRepository.saveAll(routineDays);
+    }
 }

@@ -17,6 +17,9 @@ public class UserService {
     @Autowired
     private RoutineService routineService;
 
+    @Autowired
+    private RoutineDayService routineDayService;
+
     @Transactional
     public Map<String, Object> addUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -24,38 +27,13 @@ public class UserService {
         }
 
         User createdUser = userRepository.save(user);
-
-        Routine routine = new Routine();
-        routine.setName("Rutina de " + user.getName());
-        routine.setUser(createdUser);
-
-        int days = getDaysPerPlan(user.getTypePlan());
-        for (int i = 1; i <= days; i++) {
-            RoutineDay routineDay = new RoutineDay();
-            routineDay.setDay("DÍA " + i);
-            routine.addRoutineDay(routineDay);
-        }
-
-        routineService.createRoutine(routine);
+        routineService.createRoutineForUser(createdUser);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "User created successfully");
         response.put("role", createdUser.getRole());
         return response;
-    }
-
-    private int getDaysPerPlan(String typePlan) {
-        switch (typePlan.toUpperCase()) {
-            case "PRINCIPIANTE":
-                return 2;
-            case "INTERMEDIO":
-                return 4;
-            case "AVANZADO":
-                return 6;
-            default:
-                return 0;
-        }
     }
 
     @Transactional(readOnly = true)
@@ -70,18 +48,37 @@ public class UserService {
 
     @Transactional
     public User updateUser(User user) {
-        if (!userRepository.existsById(user.getId())) {
-            throw new IllegalArgumentException("El usuario no existe.");
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
+
+        existingUser.setName(user.getName());
+        existingUser.setSurname(user.getSurname());
+        existingUser.setAddress(user.getAddress());
+        existingUser.setPhone(user.getPhone());
+        existingUser.setAge(user.getAge());
+        existingUser.setEmail(user.getEmail());
+        existingUser.setPassword(user.getPassword());
+        existingUser.setRole(user.getRole());
+        existingUser.setActive(user.isActive());
+
+        if (!existingUser.getTypePlan().equals(user.getTypePlan())) {
+            existingUser.setTypePlan(user.getTypePlan());
+            routineService.updateRoutineForUser(existingUser, user.getTypePlan());
         }
-        return userRepository.save(user);
+
+        return userRepository.save(existingUser);
     }
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("El usuario no existe.");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
+
+        if (user.getRoutine() != null) {
+            routineService.deleteRoutine(user.getRoutine().getId());
         }
-        userRepository.deleteById(id);
+
+        userRepository.delete(user);
     }
 
     @Transactional(readOnly = true)
@@ -129,5 +126,69 @@ public class UserService {
         result.put("routineDays", routineDays);
 
         return result;
+    }
+
+    @Transactional
+    public void removeExerciseFromUserRoutineDay(Long userId, Long routineDayId, Long exerciseRoutineDayId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        RoutineDay routineDay = user.getRoutine().getRoutineDays().stream()
+                .filter(rd -> rd.getId().equals(routineDayId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Routine day not found"));
+
+        routineDay.getExerciseRoutineDays().removeIf(erd -> erd.getId().equals(exerciseRoutineDayId));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void removeAllExercisesFromUserRoutineDay(Long userId, Long routineDayId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        RoutineDay routineDay = user.getRoutine().getRoutineDays().stream()
+                .filter(rd -> rd.getId().equals(routineDayId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Routine day not found"));
+
+        routineDay.getExerciseRoutineDays().clear();
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void removeAllExercisesFromUserRoutine(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.getRoutine().getRoutineDays().forEach(rd -> rd.getExerciseRoutineDays().clear());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public CustomExercise createCustomExerciseForUser(Long userId, CustomExercise customExercise) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        customExercise.setUser(user);
+        user.getCustomExercises().add(customExercise);
+        return userRepository.save(user).getCustomExercises().get(user.getCustomExercises().size() - 1);
+    }
+
+    @Transactional
+    public void deleteCustomExerciseForUser(Long userId, Long customExerciseId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.getCustomExercises().removeIf(ce -> ce.getId().equals(customExerciseId));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void addExerciseToUserRoutineDay(Long userId, Long routineDayId, Long exerciseId, int series, int repetitions, String weight, String waitTime) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        RoutineDay routineDay = user.getRoutine().getRoutineDays().stream()
+                .filter(day -> day.getId().equals(routineDayId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Routine day not found for this user"));
+
+        routineDayService.addExerciseToRoutineDay(routineDay.getId(), exerciseId, series, repetitions, weight, waitTime);
     }
 }

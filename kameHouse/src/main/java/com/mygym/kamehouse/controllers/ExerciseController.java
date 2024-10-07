@@ -3,38 +3,24 @@ package com.mygym.kamehouse.controllers;
 import com.mygym.kamehouse.models.Exercise;
 import com.mygym.kamehouse.services.ExerciseService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/exercises")
+@RequestMapping("/api/exercises")
 public class ExerciseController {
 
     @Autowired
     private ExerciseService exerciseService;
 
-    // Método para agregar un solo ejercicio
-    @PostMapping("/single")
-    public ResponseEntity<Exercise> addExercise(@RequestBody Exercise exercise) {
-        Exercise createdExercise = exerciseService.saveExercise(exercise);
-        return new ResponseEntity<>(createdExercise, HttpStatus.CREATED);
-    }
-
-    // Método para agregar múltiples ejercicios
-    @PostMapping("/multiple")
-    public ResponseEntity<List<Exercise>> addExercises(@RequestBody List<Exercise> exercises) {
-        List<Exercise> createdExercises = exerciseService.saveExercises(exercises);
-        return new ResponseEntity<>(createdExercises, HttpStatus.CREATED);
-    }
-
-    // Método para obtener todos los ejercicios
     @GetMapping
-    public List<Exercise> getExercises() {
-        return exerciseService.getAllExercises();
+    public ResponseEntity<List<Exercise>> getAllExercises() {
+        List<Exercise> exercises = exerciseService.getAllExercises();
+        return ResponseEntity.ok(exercises);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<Exercise> getExerciseById(@PathVariable Long id) {
         return exerciseService.getExerciseById(id)
@@ -42,21 +28,21 @@ public class ExerciseController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Método para obtener ejercicios por grupo muscular
-    @GetMapping("/muscleGroup/{muscleGroup}")
-    public List<Exercise> getExercisesByMuscleGroup(@PathVariable String muscleGroup) {
-        return exerciseService.findExercisesByMuscleGroup(muscleGroup);
+    @PostMapping
+    public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) {
+        Exercise createdExercise = exerciseService.createExercise(exercise);
+        return ResponseEntity.ok(createdExercise);
     }
 
-    // Método para actualizar un ejercicio
     @PutMapping("/{id}")
-    public void updateExercise(@PathVariable Long id, @RequestBody Exercise exerciseDetails) {
-        exerciseService.updateExercise(id, exerciseDetails);
+    public ResponseEntity<Exercise> updateExercise(@PathVariable Long id, @RequestBody Exercise exerciseDetails) {
+        Exercise updatedExercise = exerciseService.updateExercise(id, exerciseDetails);
+        return ResponseEntity.ok(updatedExercise);
     }
 
-    // Método para eliminar un ejercicio
     @DeleteMapping("/{id}")
-    public void deleteExercise(@PathVariable Long id) {
+    public ResponseEntity<?> deleteExercise(@PathVariable Long id) {
         exerciseService.deleteExercise(id);
+        return ResponseEntity.ok().body("Exercise deleted");
     }
 }

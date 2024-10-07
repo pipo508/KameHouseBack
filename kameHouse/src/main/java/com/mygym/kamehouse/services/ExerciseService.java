@@ -16,32 +16,16 @@ public class ExerciseService {
     private ExerciseRepository exerciseRepository;
 
     @Transactional
-    public Exercise saveExercise(Exercise exercise) {
+    public Exercise createExercise(Exercise exercise) {
         return exerciseRepository.save(exercise);
-    }
-
-    @Transactional
-    public List<Exercise> saveExercises(List<Exercise> exercises) {
-        return exerciseRepository.saveAll(exercises);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Exercise> getAllExercises() {
-        return exerciseRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Exercise> getExerciseById(Long id) {
-        return exerciseRepository.findById(id);
     }
 
     @Transactional
     public Exercise updateExercise(Long id, Exercise exerciseDetails) {
         Exercise exercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exercise not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
         exercise.setName(exerciseDetails.getName());
         exercise.setMuscleGroup(exerciseDetails.getMuscleGroup());
-        // Ya no actualizamos series, repetitions, weight, waitTime aquí
         return exerciseRepository.save(exercise);
     }
 
@@ -51,7 +35,12 @@ public class ExerciseService {
     }
 
     @Transactional(readOnly = true)
-    public List<Exercise> findExercisesByMuscleGroup(String muscleGroup) {
-        return exerciseRepository.findByMuscleGroup(muscleGroup);
+    public Optional<Exercise> getExerciseById(Long id) {
+        return exerciseRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Exercise> getAllExercises() {
+        return exerciseRepository.findAll();
     }
 }

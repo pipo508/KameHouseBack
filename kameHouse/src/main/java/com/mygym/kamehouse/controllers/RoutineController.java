@@ -9,15 +9,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/routines")
+@RequestMapping("/api/routines")
 public class RoutineController {
 
     @Autowired
     private RoutineService routineService;
 
     @GetMapping
-    public List<Routine> getAllRoutines() {
-        return routineService.getAllRoutines();
+    public ResponseEntity<List<Routine>> getAllRoutines() {
+        List<Routine> routines = routineService.getAllRoutines();
+        return ResponseEntity.ok(routines);
     }
 
     @GetMapping("/{id}")
@@ -28,18 +29,39 @@ public class RoutineController {
     }
 
     @PostMapping
-    public Routine createRoutine(@RequestBody Routine routine) {
-        return routineService.createRoutine(routine);
+    public ResponseEntity<Routine> createRoutine(@RequestBody Routine routine) {
+        Routine createdRoutine = routineService.createRoutine(routine);
+        return ResponseEntity.ok(createdRoutine);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Routine> updateRoutine(@PathVariable Long id, @RequestBody Routine routineDetails) {
-        return ResponseEntity.ok(routineService.updateRoutine(id, routineDetails));
+        Routine updatedRoutine = routineService.updateRoutine(id, routineDetails);
+        return ResponseEntity.ok(updatedRoutine);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRoutine(@PathVariable Long id) {
         routineService.deleteRoutine(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{routineId}/days")
+    public ResponseEntity<Routine> addDayToRoutine(@PathVariable Long routineId, @RequestBody String dayName) {
+        Routine updatedRoutine = routineService.addDayToRoutine(routineId, dayName);
+        return ResponseEntity.ok(updatedRoutine);
+    }
+
+    @DeleteMapping("/{routineId}/days/{dayId}")
+    public ResponseEntity<Routine> removeDayFromRoutine(@PathVariable Long routineId, @PathVariable Long dayId) {
+        Routine updatedRoutine = routineService.removeDayFromRoutine(routineId, dayId);
+        return ResponseEntity.ok(updatedRoutine);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Routine> getRoutineByUserId(@PathVariable Long userId) {
+        return routineService.getRoutineByUserId(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
