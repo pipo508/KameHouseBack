@@ -2,29 +2,42 @@ package com.mygym.kamehouse.services;
 
 import com.mygym.kamehouse.models.*;
 import com.mygym.kamehouse.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoutineService routineService;
+    private final RoutineDayService routineDayService;
 
-    @Autowired
-    private RoutineService routineService;
-
-    @Autowired
-    private RoutineDayService routineDayService;
+    public UserService(PasswordEncoder passwordEncoder,
+                       UserRepository userRepository,
+                       RoutineService routineService,
+                       RoutineDayService routineDayService) {
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.routineService = routineService;
+        this.routineDayService = routineDayService;
+    }
 
     @Transactional
     public Map<String, Object> addUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("El email ya está registrado.");
         }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setActive(true);
 
         User createdUser = userRepository.save(user);
         routineService.createRoutineForUser(createdUser);
@@ -46,10 +59,16 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
+
     @Transactional
     public User updateUser(User user) {
         User existingUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + user.getId()));
 
         existingUser.setName(user.getName());
         existingUser.setSurname(user.getSurname());
@@ -57,13 +76,12 @@ public class UserService {
         existingUser.setPhone(user.getPhone());
         existingUser.setAge(user.getAge());
         existingUser.setEmail(user.getEmail());
-        existingUser.setPassword(user.getPassword());
         existingUser.setRole(user.getRole());
+        existingUser.setTypePlan(user.getTypePlan());
         existingUser.setActive(user.isActive());
 
-        if (!existingUser.getTypePlan().equals(user.getTypePlan())) {
-            existingUser.setTypePlan(user.getTypePlan());
-            routineService.updateRoutineForUser(existingUser, user.getTypePlan());
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
         return userRepository.save(existingUser);
@@ -71,20 +89,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
-
-        if (user.getRoutine() != null) {
-            routineService.deleteRoutine(user.getRoutine().getId());
-        }
-
-        userRepository.delete(user);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<User> getUserByEmailAndPassword(String email, String password) {
-        return userRepository.findByEmail(email)
-                .filter(user -> user.getPassword().equals(password));
+        userRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
@@ -129,7 +134,7 @@ public class UserService {
     }
 
     @Transactional
-    public void removeExerciseFromUserRoutineDay(Long userId, Long routineDayId, Long exerciseRoutineDayId) {
+    public void removeExerciseFromUserRoutineDay(Long userId, Long routineDayId, Long exerciseId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         RoutineDay routineDay = user.getRoutine().getRoutineDays().stream()
@@ -137,7 +142,7 @@ public class UserService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Routine day not found"));
 
-        routineDay.getExerciseRoutineDays().removeIf(erd -> erd.getId().equals(exerciseRoutineDayId));
+        routineDay.getExerciseRoutineDays().removeIf(erd -> erd.getExercise().getId().equals(exerciseId));
         userRepository.save(user);
     }
 
@@ -190,5 +195,27 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Routine day not found for this user"));
 
         routineDayService.addExerciseToRoutineDay(routineDay.getId(), exerciseId, series, repetitions, weight, waitTime);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                user.isActive(),
+                true,
+                true,
+                true,
+                authorities
+        );
+    }
+
+    public void deleteAllUsers() {
+        userRepository.deleteAll();
     }
 }

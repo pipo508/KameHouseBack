@@ -10,7 +10,4 @@ import java.util.Optional;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Exercise> findByMuscleGroup(String muscleGroup);
-
-    // Renombrar el método para que retorne un Optional
-    Optional<Exercise> findByNameIgnoreCase(String name);
 }

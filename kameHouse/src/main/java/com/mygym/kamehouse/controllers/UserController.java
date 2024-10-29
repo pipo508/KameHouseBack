@@ -1,10 +1,16 @@
 package com.mygym.kamehouse.controllers;
 
-import com.mygym.kamehouse.models.CustomExercise;
+import com.mygym.kamehouse.dto.UserLoginDto;
 import com.mygym.kamehouse.models.User;
+import com.mygym.kamehouse.models.CustomExercise;
 import com.mygym.kamehouse.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,21 +24,44 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // Crea un nuevo usuario
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createUser(@RequestBody User user) {
-        Map<String, Object> response = userService.addUser(user);
-        return ResponseEntity.ok(response);
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
+        try {
+            Map<String, Object> response = userService.addUser(user);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
-    // Obtiene todos los usuarios
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody UserLoginDto loginDto) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println(authentication.getCredentials()  );
+            User user = userService.getUserByEmail(loginDto.getEmail());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Login successful");
+            response.put("user", user);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getUsers();
         return ResponseEntity.ok(users);
     }
 
-    // Obtiene un usuario por su ID
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
@@ -40,7 +69,6 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Actualiza un usuario existente
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         user.setId(id);
@@ -48,41 +76,27 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    // Elimina un usuario
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok().build();
     }
 
-    // Inicia sesión de usuario
-    @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
-        return userService.getUserByEmailAndPassword(email, password)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // Obtiene la rutina de un usuario con sus ejercicios
     @GetMapping("/{userId}/routine")
     public ResponseEntity<Map<String, Object>> getUserRoutineWithExercises(@PathVariable Long userId) {
         Map<String, Object> routineData = userService.getUserRoutineWithExercises(userId);
         return ResponseEntity.ok(routineData);
     }
 
-    // Elimina un ejercicio específico de un día de rutina de un usuario
-    @DeleteMapping("/{userId}/routinedays/{routineDayId}/exercises/{exerciseRoutineDayId}")
+    @DeleteMapping("/{userId}/routinedays/{routineDayId}/exercises/{exerciseId}")
     public ResponseEntity<?> removeExerciseFromUserRoutineDay(
             @PathVariable Long userId,
             @PathVariable Long routineDayId,
-            @PathVariable Long exerciseRoutineDayId) {
-        userService.removeExerciseFromUserRoutineDay(userId, routineDayId, exerciseRoutineDayId);
-        return ResponseEntity.ok().body("Exercise removed from user's routine day");
+            @PathVariable Long exerciseId) {
+        userService.removeExerciseFromUserRoutineDay(userId, routineDayId, exerciseId);
+        return ResponseEntity.ok().body("Ejercicio eliminado del día de rutina del usuario");
     }
 
-    // Elimina todos los ejercicios de un día de rutina específico de un usuario
     @DeleteMapping("/{userId}/routinedays/{routineDayId}/exercises")
     public ResponseEntity<?> removeAllExercisesFromUserRoutineDay(
             @PathVariable Long userId,
@@ -91,14 +105,12 @@ public class UserController {
         return ResponseEntity.ok().body("All exercises removed from user's routine day");
     }
 
-    // Elimina todos los ejercicios de toda la rutina de un usuario
     @DeleteMapping("/{userId}/routine/exercises")
     public ResponseEntity<?> removeAllExercisesFromUserRoutine(@PathVariable Long userId) {
         userService.removeAllExercisesFromUserRoutine(userId);
         return ResponseEntity.ok().body("All exercises removed from user's routine");
     }
 
-    // Crea un ejercicio personalizado para un usuario
     @PostMapping("/{userId}/custom-exercises")
     public ResponseEntity<CustomExercise> createCustomExerciseForUser(
             @PathVariable Long userId,
@@ -107,7 +119,6 @@ public class UserController {
         return ResponseEntity.ok(createdExercise);
     }
 
-    // Elimina un ejercicio personalizado de un usuario
     @DeleteMapping("/{userId}/custom-exercises/{customExerciseId}")
     public ResponseEntity<?> deleteCustomExerciseForUser(
             @PathVariable Long userId,
@@ -116,7 +127,6 @@ public class UserController {
         return ResponseEntity.ok().body("Custom exercise deleted");
     }
 
-    // Agrega un ejercicio a un día de rutina específico de un usuario
     @PostMapping("/{userId}/routinedays/{routineDayId}/exercises/{exerciseId}")
     public ResponseEntity<?> addExerciseToUserRoutineDay(
             @PathVariable Long userId,
@@ -137,5 +147,11 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @DeleteMapping("/all")
+    public ResponseEntity<?> deleteAllUsers() {
+        userService.deleteAllUsers();
+        return ResponseEntity.ok().body("All users have been deleted");
     }
 }

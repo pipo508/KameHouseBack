@@ -1,5 +1,6 @@
 package com.mygym.kamehouse.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,7 +27,7 @@ public class User {
     private String age;
     private String email;
     private String password;
-    private int role = 1;
+    private int role =1;
     private String typePlan = "PRINCIPIANTE";
     private boolean isActive;
 
@@ -36,4 +37,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomExercise> customExercises = new ArrayList<>();
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Payment> payments = new ArrayList<>();
 }

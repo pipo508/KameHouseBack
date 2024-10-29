@@ -1,33 +1,28 @@
 package com.mygym.kamehouse.models;
 
-import com.mygym.kamehouse.models.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "payments") // Nombre de la tabla
+@Table(name = "payments")
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id") // Nombre de la columna en la tabla Payment que referencia a User
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
-    private String method;
-    private String amount;
-
-    @Column(name = "payment_date")
-    private String paymentDate;
-
-    @Column(name = "expiration_date")
-    private String expirationDate;
-
-    private boolean status;
+    private LocalDateTime paymentDate;
+    private Double amount;
+    private String planPaid;
+    private String paymentMethod;
+    private String paymentStatus;
 }

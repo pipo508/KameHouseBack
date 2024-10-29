@@ -1,0 +1,109 @@
+1. Crear Usuario
+   POST http://192.168.100.5:8080/api/users
+   Body:
+   {
+     "name": "John Doe",
+     "email": "john@example.com",
+     "password": "password123",
+     "typePlan": "INTERMEDIO",
+     "age": "30",
+     "phone": "1234567890",
+     "address": "123 Main St"
+   }
+
+2. Login de Usuario
+   POST http://192.168.100.5:8080/api/users/login
+   Body:
+   {
+     "email": "john@example.com",
+     "password": "password123"
+   }
+
+3. Obtener Todos los Usuarios
+   GET http://192.168.100.5:8080/api/users
+
+4. Obtener Usuario por ID
+   GET http://192.168.100.5:8080/api/users/{id}
+
+5. Actualizar Usuario
+   PUT http://192.168.100.5:8080/api/users/{id}
+   Body:
+   {
+     "name": "John Updated",
+     "email": "john_updated@example.com",
+     "typePlan": "AVANZADO",
+     "age": "31",
+     "phone": "9876543210",
+     "address": "456 New St"
+   }
+
+6. Eliminar Usuario
+   DELETE http://192.168.100.5:8080/api/users/{id}
+
+7. Obtener Rutina de Usuario con Ejercicios
+   GET http://192.168.100.5:8080/api/users/{userId}/routine
+
+8. Crear Ejercicio Personalizado para Usuario
+   POST http://192.168.100.5:8080/api/users/{userId}/custom-exercises
+   Body:
+   {
+     "name": "Mi Ejercicio Personalizado",
+     "muscleGroup": "Piernas"
+   }
+
+9. Eliminar Ejercicio Personalizado de Usuario
+   DELETE http://192.168.100.5:8080/api/users/{userId}/custom-exercises/{customExerciseId}
+
+10. Crear Ejercicio (en la biblioteca general)
+    POST http://192.168.100.5:8080/api/exercises
+    Body:
+    {
+      "name": "Sentadillas",
+      "muscleGroup": "Piernas"
+    }
+
+11. Obtener Todos los Ejercicios
+    GET http://192.168.100.5:8080/api/exercises
+
+12. Actualizar Ejercicio
+    PUT http://192.168.100.5:8080/api/exercises/{id}
+    Body:
+    {
+      "name": "Sentadillas Profundas",
+      "muscleGroup": "Piernas y Glúteos"
+    }
+
+13. Eliminar Ejercicio
+    DELETE http://192.168.100.5:8080/api/exercises/{id}
+
+14. Agregar Ejercicio a Día de Rutina de Usuario
+    POST http://192.168.100.5:8080/api/routinedays/{routineDayId}/exercises/{exerciseId}
+    Body:
+    {
+      "series": 3,
+      "repetitions": 12,
+      "weight": "10kg",
+      "waitTime": "30s"
+    }
+
+15. Eliminar Ejercicio de Día de Rutina de Usuario
+    DELETE http://192.168.100.5:8080/api/users/{userId}/routinedays/{routineDayId}/exercises/{exerciseRoutineDayId}
+
+16. Eliminar Todos los Ejercicios de Día de Rutina de Usuario
+    DELETE http://192.168.100.5:8080/api/users/{userId}/routinedays/{routineDayId}/exercises
+
+17. Eliminar Todos los Ejercicios de Rutina de Usuario
+    DELETE http://192.168.100.5:8080/api/users/{userId}/routine/exercises
+
+18. Obtener Todos los Días de Rutina
+    GET http://192.168.100.5:8080/api/routinedays
+
+19. Obtener Día de Rutina por ID
+    GET http://192.168.100.5:8080/api/routinedays/{id}
+
+20. Actualizar Día de Rutina
+    PUT http://192.168.100.5:8080/api/routinedays/{id}
+    Body:
+    {
+      "day": "DÍA 1 - Modificado"
+    }

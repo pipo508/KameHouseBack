@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ExerciseService {
@@ -42,5 +43,17 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public List<Exercise> getAllExercises() {
         return exerciseRepository.findAll();
+    }
+
+    @Transactional
+    public List<Exercise> createExercises(List<Exercise> exercises) {
+        return exerciseRepository.saveAll(exercises);
+    }
+
+    @Transactional
+    public List<Exercise> findExercisesByMuscleGroup(String muscleGroup) {
+        return exerciseRepository.findAll().stream()
+                .filter(exercise -> exercise.getMuscleGroup().equalsIgnoreCase(muscleGroup))
+                .collect(Collectors.toList());
     }
 }

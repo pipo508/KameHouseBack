@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/exercises")
@@ -34,6 +36,12 @@ public class ExerciseController {
         return ResponseEntity.ok(createdExercise);
     }
 
+    @PostMapping("/multiple")
+    public ResponseEntity<List<Exercise>> createExercises(@RequestBody List<Exercise> exercises) {
+        List<Exercise> createdExercises = exerciseService.createExercises(exercises);
+        return ResponseEntity.ok(createdExercises);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Exercise> updateExercise(@PathVariable Long id, @RequestBody Exercise exerciseDetails) {
         Exercise updatedExercise = exerciseService.updateExercise(id, exerciseDetails);
@@ -45,4 +53,12 @@ public class ExerciseController {
         exerciseService.deleteExercise(id);
         return ResponseEntity.ok().body("Exercise deleted");
     }
+    @GetMapping("/by-muscle-group/{muscleGroup}")
+    public ResponseEntity<List<Exercise>> getExercisesByMuscleGroup(@PathVariable String muscleGroup) {
+        List<Exercise> exercises = exerciseService.findExercisesByMuscleGroup(muscleGroup);
+        return ResponseEntity.ok(exercises);
+    }
+
+
+
 }
